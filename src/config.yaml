@@ -1,0 +1,31 @@
+# Data
+covid:
+  num_classes: 2
+  train: "../data/covid/covid_train.tsv"
+  val: "../data/covid/covid_valid.tsv"
+  test: "../data/covid/covid_test_with_label.tsv"
+  label_col: 2
+  statement_col: 1
+  class_names: ["True", "Fake"]
+
+liar:
+  num_classes: 6
+  train: "../data/liar/train.tsv"
+  val: "../data/liar/valid.tsv"
+  test: "../data/liar/test.tsv"
+  label_col: 1
+  statement_col: 2
+  class_names: ["True", "Mostly-true", "Half-true", "Barely-true", "False", "Pants-fire"]
+
+embedding_dim: 64
+max_grad_norm: 10
+epochs: 5
+batch_size: 4
+lr: 0.00001
+weight_decay: 0.01
+gpu: 0
+seed: 9999
+save_path: "../saved_models"
+report_path: "../classification_report"
+
+
