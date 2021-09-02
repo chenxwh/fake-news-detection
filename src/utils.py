@@ -3,8 +3,6 @@ Created on 02 Sep 2021
 author: Chenxi
 """
 
-
-import time
 import datetime
 import numpy as np
 

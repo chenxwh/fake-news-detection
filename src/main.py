@@ -13,6 +13,7 @@ import yaml
 import yamlordereddictloader
 from datetime import datetime
 from transformers import RobertaTokenizer, RobertaForSequenceClassification
+from transformers import BertTokenizer, BertForSequenceClassification
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from sklearn.metrics import classification_report
 from dataset import NewsDataset
@@ -25,6 +26,10 @@ def get_tokernizer_and_model(config):
         tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
         model = RobertaForSequenceClassification.from_pretrained('roberta-base',
                                                                  num_labels=config[config['dataset_name']]['num_classes'])
+    elif config['model_name'] == 'bert-base':
+        tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
+        model = BertForSequenceClassification.from_pretrained('bert-base-cased',
+                                                              num_labels=config[config['dataset_name']]['num_classes'])
     return tokenizer, model
 
 
@@ -53,7 +58,7 @@ def main():
     parser.add_argument('--dataset', type=str, default='covid', choices=['liar', 'covid'])
     parser.add_argument('--config', type=str, default='config.yaml')
     parser.add_argument('--mode', type=str, choices=['train', 'test'])
-    parser.add_argument('--model', type=str, default='roberta-base')
+    parser.add_argument('--model', type=str, default='roberta-base', choices=['roberta-base', 'bert-base'])
     parser.add_argument('--verbose', action='store_true', default=False, help='print detailed training process')
 
     args = parser.parse_args()

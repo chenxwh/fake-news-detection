@@ -1,3 +1,4 @@
 saved_models/
 classification_report/
 *.pyc
+.idea/
