@@ -9,21 +9,22 @@ import pandas as pd
 
 
 class NewsDataset(Dataset):
-    def __init__(self, config, dataset_name, tokenizer, mode, load_size=None):
+    def __init__(self, config, dataset_name, tokenizer, mode, batcher=None, load_size=None):
         self.config = config
         self.dataset_name = dataset_name
         self.labels, self.statements = load_dataset(config, dataset_name, mode, load_size)
         self.tokenizer = tokenizer
+        self.bathcer = batcher
 
     def __len__(self):
         return len(self.statements)
 
     def __getitem__(self, idx):
-        statements = str(self.statements[idx])
-        labels = self.labels[idx]
+        statement = str(self.statements[idx])
+        label = self.labels[idx]
 
         encoding = self.tokenizer.encode_plus(
-            statements,
+            statement,
             add_special_tokens=True,
             truncation=True,
             max_length=self.config['embedding_dim'],
@@ -33,11 +34,24 @@ class NewsDataset(Dataset):
             return_tensors='pt',
         )
 
+        if self.config['model_name'] in ['knowbert-w-w', 'knowbert-wiki', 'knowbert-wordnet']:
+            return {
+                'input_ids': encoding['input_ids'].flatten(),
+                'labels': torch.tensor(label, dtype=torch.long),
+                'candidates': get_knowbert_candidates(self.bathcer, statement)
+            }
+
+        # up to now, all the bert, roberta and k-adapters use the standard Dataset
         return {
             'input_ids': encoding['input_ids'].flatten(),
             'attention_mask': encoding['attention_mask'].flatten(),
-            'labels': torch.tensor(labels, dtype=torch.long)
+            'labels': torch.tensor(label, dtype=torch.long)
         }
+
+
+def get_knowbert_candidates(batcher, statement):
+    tokens_candidates = batcher.tokenizer_and_candidate_generator.tokenize_and_generate_candidates(batcher._replace_mask(statement))
+    fields = batcher.tokenizer_and_candidate_generator.convert_tokens_candidates_to_fields(tokens_candidates)
 
 
 def load_dataset(config, dataset_name, mode, load_size=None):

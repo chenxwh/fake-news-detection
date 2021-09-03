@@ -7,28 +7,11 @@ import os
 import time
 import torch
 import torch.nn as nn
-from transformers import AdamW, get_linear_schedule_with_warmup
 from utils import *
+from trainer import Trainer
 
 
-class Trainer:
-    def __init__(self, config, model, train_dataloader, val_dataloader):
-        no_decay = ['bias', 'LayerNorm.weight']
-        optimizer_grouped_parameters = [
-            {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-             'weight_decay': config['weight_decay']},
-            {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-        ]
-        self.optimizer = AdamW(optimizer_grouped_parameters, lr=config['lr'])
-        self.scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=0,
-                                                         num_training_steps=len(train_dataloader) * config['epochs'])
-        self.model = model
-        self.loss_fct = nn.CrossEntropyLoss()
-        self.num_labels = config[config['dataset_name']]['num_classes']
-        self.config = config
-        self.train_dataloader = train_dataloader
-        self.val_dataloader = val_dataloader
-        self.model_save_path = os.path.join(config['save_path'], config['dataset_name'] + '-' + config['model_name'] + '.pth')
+class KnowbertTrainer(Trainer):
 
     def train(self, verbose=False):
         best_accuracy = 0
@@ -66,26 +49,17 @@ class Trainer:
                                                                                     elapsed))
 
                 b_input_ids = batch['input_ids'].to(self.config['device'])
-                b_input_mask = batch['attention_mask'].to(self.config['device'])
+                b_candidates = batch['candidates'].to(self.config['device'])
                 b_labels = batch['labels'].to(self.config['device'])
 
                 self.model.zero_grad()
 
-                if self.config['model_name'] in ['k_adapters']:
-                    logits = self.model(b_input_ids,
-                                        attention_mask=b_input_mask)
-                    loss = self.loss_fct(logits.view(-1, self.num_labels), b_labels.view(-1))
-                    a = 1
-                    b =2
+                result = self.model(tokens=b_input_ids,
+                                    candidates=b_candidates,
+                                    labels=b_labels)
 
-                else:
-                    result = self.model(b_input_ids,
-                                        attention_mask=b_input_mask,
-                                        labels=b_labels,
-                                        return_dict=True)
-
-                    loss = result.loss
-                    logits = result.logits
+                loss = result.loss
+                logits = result.logits
 
                 total_train_loss += loss.item()
 
@@ -142,16 +116,16 @@ class Trainer:
 
             # Evaluate data for one epoch
             for batch in self.val_dataloader:
+
                 b_input_ids = batch['input_ids'].to(self.config['device'])
-                b_input_mask = batch['attention_mask'].to(self.config['device'])
+                b_candidates = batch['candidates'].to(self.config['device'])
                 b_labels = batch['labels'].to(self.config['device'])
 
                 with torch.no_grad():
                     # Forward pass, calculate logit predictions.
-                    result = self.model(b_input_ids,
-                                        attention_mask=b_input_mask,
-                                        labels=b_labels,
-                                        return_dict=True)
+                    result = self.model(tokens=b_input_ids,
+                                        candidates=b_candidates,
+                                        labels=b_labels)
 
                 # Get the loss and "logits" output by the model. The "logits" are the
                 # output values prior to applying an activation function like the softmax

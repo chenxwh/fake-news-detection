@@ -1,3 +1,10 @@
 #!/bin/sh
 pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio===0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 pip install -r requirements.txt
+git clone https://github.com/allenai/kb.git
+cd kb
+python -c "import nltk; nltk.download('wordnet')"
+python -m spacy download en_core_web_sm
+pip install --editable .
+cd ..
+git clone https://github.com/microsoft/K-Adapter.git k_adapters

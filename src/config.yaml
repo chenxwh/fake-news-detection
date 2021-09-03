@@ -17,10 +17,22 @@ liar:
   statement_col: 2
   class_names: ["True", "Mostly-true", "Half-true", "Barely-true", "False", "Pants-fire"]
 
+# model_archive
+model_archive:
+  knowbert-w-w: "https://allennlp.s3-us-west-2.amazonaws.com/knowbert/models/knowbert_wiki_wordnet_model.tar.gz"
+  knowbert-wiki: "https://allennlp.s3-us-west-2.amazonaws.com/knowbert/models/knowbert_wiki_model.tar.gz"
+  knowbert-wordnet: "https://allennlp.s3-us-west-2.amazonaws.com/knowbert/models/knowbert_wordnet_model.tar.gz"
+  k_adapters_fac: "../kadapters_models/fac-adapter/pytorch_model.bin"
+  k_adapters_lin: "../kadapters_models/lin-adapter/pytorch_model.bin"
+
+# fine-tuning parameters
 embedding_dim: 64
+hidden_size: 768
+hidden_size_large: 1024
+dropout_prob: 0.1  # BertForSequenceClassification default Dropout p=0.1
 max_grad_norm: 10
 epochs: 5
-batch_size: 4
+batch_size: 1
 lr: 0.00001
 weight_decay: 0.01
 gpu: 0

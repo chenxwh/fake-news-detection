@@ -2,3 +2,10 @@ saved_models/
 classification_report/
 *.pyc
 .idea/
+kb/
+knowbert_models/
+kepler_models/
+kadapters_models/
+model_architectures/
+k_adapters/
+*.pth
