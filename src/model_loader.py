@@ -3,39 +3,40 @@ Created on 03 Sep 2021
 author: Chenxi
 """
 
-
-from transformers import RobertaTokenizer, RobertaForSequenceClassification
+from transformers import RobertaTokenizer, RobertaForSequenceClassification, RobertaConfig
 from transformers import BertTokenizer, BertForSequenceClassification
-from model import KnowbertForSequenceClassification, KAdaptersForSequenceClassification
-
+from model import KnowbertForSequenceClassification, ErnieForSequenceClassification, KAdaptersForSequenceClassification
+from ernie.code.knowledge_bert import BertTokenizer as ErnieBertTokenizer
 
 
 def get_tokenizer_and_model(config):
-    opts = {'num_labels': config[config['dataset_name']]['num_classes'],
-            'hidden_size': config['hidden_size'],
-            'dropout_prob': config['dropout_prob']}
     if config['model_name'] == 'roberta-base':
         tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
-        model = RobertaForSequenceClassification.from_pretrained('roberta-base', num_labels=opts['num_labels'])
-    if config['model_name'] == 'roberta-large':
+        model = RobertaForSequenceClassification.from_pretrained('roberta-base', num_labels=config['num_labels'])
+    elif config['model_name'] == 'roberta-large':
         tokenizer = RobertaTokenizer.from_pretrained("roberta-large")
-        model = RobertaForSequenceClassification.from_pretrained('roberta-large', num_labels=opts['num_labels'])
+        model = RobertaForSequenceClassification.from_pretrained('roberta-large', num_labels=config['num_labels'])
     elif config['model_name'] == 'bert-base':
+        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=config['num_labels'])
+    elif config['model_name'] == 'bert-base-cased':
         tokenizer = BertTokenizer.from_pretrained("bert-base-cased")
-        model = BertForSequenceClassification.from_pretrained('bert-base-cased', num_labels=opts['num_labels'])
-    elif config['model_name'] == 'bert-base-uncased':
-        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-        model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=opts['num_labels'])
+        model = BertForSequenceClassification.from_pretrained('bert-base-cased', num_labels=config['num_labels'])
     elif config['model_name'] in ['knowbert-w-w', 'knowbert-wiki', 'knowbert-wordnet']:
-        model_archive = config['model_archive']['model_name']
-        model = KnowbertForSequenceClassification(model_archive, opts)
+        model_archive = config['model_archive'][config['model_name']]
+        model = KnowbertForSequenceClassification(model_archive, config)
         tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    elif config['model_name'] in ['k_adapters']:
-        # k_adapters are based on roberta-large by default
-        # changed force_download=True in line 849 of k_adapters.pytorch_transformers.my_modeling_roberta so no
-        # complaints about not enough space
-        opts['hidden_size'] = config['hidden_size_large']
+    elif config['model_name'] in ['kepler', 'erica-roberta']:
+        model_config_path = config['model_archive'][config['model_name']]
+        tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
+        model = RobertaForSequenceClassification.from_pretrained(model_config_path, from_tf=False, num_labels=config['num_labels'])
+    elif config['model_name'] in ['k_adapter']:
+        # k_adapter are based on roberta-large by default
         tokenizer = RobertaTokenizer.from_pretrained("roberta-large")
-        model = KAdaptersForSequenceClassification(config['args'], opts)
+        model = KAdaptersForSequenceClassification(config['args'], config)
+    elif config['model_name'] in ['ernie']:
+        model_config_path = config['model_archive'][config['model_name']]
+        tokenizer = ErnieBertTokenizer.from_pretrained(model_config_path, do_lower_case=True)
+        model, _ = ErnieForSequenceClassification.from_pretrained(model_config_path, num_labels=config['num_labels'])
 
     return tokenizer, model

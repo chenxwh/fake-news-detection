@@ -7,4 +7,5 @@ python -c "import nltk; nltk.download('wordnet')"
 python -m spacy download en_core_web_sm
 pip install --editable .
 cd ..
-git clone https://github.com/microsoft/K-Adapter.git k_adapters
+git clone https://github.com/microsoft/K-Adapter.git k_adapter
+git clone https://github.com/thunlp/ERNIE.git ernie

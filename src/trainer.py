@@ -24,15 +24,26 @@ class Trainer:
                                                          num_training_steps=len(train_dataloader) * config['epochs'])
         self.model = model
         self.loss_fct = nn.CrossEntropyLoss()
-        self.num_labels = config[config['dataset_name']]['num_classes']
+        self.num_labels = config['num_labels']
         self.config = config
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
-        self.model_save_path = os.path.join(config['save_path'], config['dataset_name'] + '-' + config['model_name'] + '.pth')
+        if config['model_name'] == 'ernie':
+            self.model_save_path = os.path.join(config['save_path'], config['dataset_name'] + '-' + config['model_name']
+                                                + '-' + str(config['num_labels']) + '-thr-' + str(config['tagme_thr']) +'.pth')
+        else:
+            self.model_save_path = os.path.join(config['save_path'], config['dataset_name'] + '-' + config['model_name']
+                                            + '-' + str(config['num_labels']) + '.pth')
 
     def train(self, verbose=False):
+        if self.config['logging']:
+            with open(self.config['logging_file'] + '.txt', 'a') as f:
+                f.write(f"Dataset: {self.config['dataset_name']}, model: {self.config['model_name']},"
+                        f" batch size: {self.config['batch_size']}" + "\n")
+                if self.config['model_name'] == 'ernie':
+                    f.write(f"threshold: {self.config['tagme_thr']}" + "\n")
+
         best_accuracy = 0
-        training_stats = []
 
         # Measure the total training time for the whole run.
         total_t0 = time.time()
@@ -46,6 +57,12 @@ class Trainer:
             print("")
             print(f'======== Epoch {epoch_i + 1} / {self.config["epochs"]} ========')
             print('Training...')
+
+            if self.config['logging']:
+                with open(self.config['logging_file'] + '.txt', 'a') as f:
+                    f.write("" + "\n")
+                    f.write(f'======== Epoch {epoch_i + 1} / {self.config["epochs"]} ========' + "\n")
+                    f.write('Training...' + "\n")
 
             # Measure how long the training epoch takes.
             t0 = time.time()
@@ -65,27 +82,40 @@ class Trainer:
                         print('  Batch {:>5,}  of  {:>5,}.    Elapsed: {:}.'.format(step, len(self.train_dataloader),
                                                                                     elapsed))
 
-                b_input_ids = batch['input_ids'].to(self.config['device'])
-                b_input_mask = batch['attention_mask'].to(self.config['device'])
-                b_labels = batch['labels'].to(self.config['device'])
-
                 self.model.zero_grad()
 
-                if self.config['model_name'] in ['k_adapters']:
-                    logits = self.model(b_input_ids,
-                                        attention_mask=b_input_mask)
-                    loss = self.loss_fct(logits.view(-1, self.num_labels), b_labels.view(-1))
-                    a = 1
-                    b =2
+                if self.config['model_name'] == 'ernie':
+                    embed = self.config['ernie_embed']
+                    b_input_ids = batch['input_ids'].to(self.config['device'])
+                    b_input_ent = embed(batch['input_ent'] + 1).to(self.config['device'])
+                    b_ent_mask = batch['ent_mask'].to(self.config['device'])
+                    b_labels = batch['labels'].to(self.config['device'])
 
-                else:
                     result = self.model(b_input_ids,
-                                        attention_mask=b_input_mask,
-                                        labels=b_labels,
-                                        return_dict=True)
-
+                                        input_ent=b_input_ent,
+                                        ent_mask=b_ent_mask,
+                                        labels=b_labels)
                     loss = result.loss
                     logits = result.logits
+
+                else:
+                    b_input_ids = batch['input_ids'].to(self.config['device'])
+                    b_input_mask = batch['attention_mask'].to(self.config['device'])
+                    b_labels = batch['labels'].to(self.config['device'])
+
+                    if self.config['model_name'] in ['k_adapter']:
+                        logits = self.model(b_input_ids,
+                                            attention_mask=b_input_mask)
+                        loss = self.loss_fct(logits.view(-1, self.num_labels), b_labels.view(-1))
+                    else:
+
+                        result = self.model(b_input_ids,
+                                            attention_mask=b_input_mask,
+                                            labels=b_labels,
+                                            return_dict=True)
+
+                        loss = result.loss
+                        logits = result.logits
 
                 total_train_loss += loss.item()
 
@@ -119,7 +149,14 @@ class Trainer:
             print("")
             print("  Average training loss: {0:.2f}".format(avg_train_loss))
             print("  Training Accuracy: {0:.2f}".format(ave_train_accuracy))
-            print(f'  Training epcoh took: {training_time}')
+            print(f'  Training epoch took: {training_time}')
+
+            if self.config['logging']:
+                with open(self.config['logging_file'] + '.txt', 'a') as f:
+                    f.write("" + "\n")
+                    f.write("  Average training loss: {0:.2f}".format(avg_train_loss) + "\n")
+                    f.write("  Training Accuracy: {0:.2f}".format(ave_train_accuracy) + "\n")
+                    f.write(f'  Training epoch took: {training_time}' + "\n")
 
             # ========================================
             #               Validation
@@ -129,6 +166,11 @@ class Trainer:
 
             print("")
             print("Running Validation...")
+
+            if self.config['logging']:
+                with open(self.config['logging_file'] + '.txt', 'a') as f:
+                    f.write("" + "\n")
+                    f.write("Running Validation..." + "\n")
 
             t0 = time.time()
 
@@ -142,21 +184,43 @@ class Trainer:
 
             # Evaluate data for one epoch
             for batch in self.val_dataloader:
-                b_input_ids = batch['input_ids'].to(self.config['device'])
-                b_input_mask = batch['attention_mask'].to(self.config['device'])
-                b_labels = batch['labels'].to(self.config['device'])
 
                 with torch.no_grad():
-                    # Forward pass, calculate logit predictions.
-                    result = self.model(b_input_ids,
-                                        attention_mask=b_input_mask,
-                                        labels=b_labels,
-                                        return_dict=True)
 
-                # Get the loss and "logits" output by the model. The "logits" are the
-                # output values prior to applying an activation function like the softmax
-                loss = result.loss
-                logits = result.logits
+                    if self.config['model_name'] == 'ernie':
+
+                        embed = self.config['ernie_embed']
+                        b_input_ids = batch['input_ids'].to(self.config['device'])
+                        b_input_ent = embed(batch['input_ent'] + 1).to(self.config['device'])
+                        b_ent_mask = batch['ent_mask'].to(self.config['device'])
+                        b_labels = batch['labels'].to(self.config['device'])
+
+                        result = self.model(b_input_ids,
+                                            input_ent=b_input_ent,
+                                            ent_mask=b_ent_mask,
+                                            labels=b_labels)
+
+                        loss = result.loss
+                        logits = result.logits
+
+                    else:
+                        b_input_ids = batch['input_ids'].to(self.config['device'])
+                        b_input_mask = batch['attention_mask'].to(self.config['device'])
+                        b_labels = batch['labels'].to(self.config['device'])
+
+                        if self.config['model_name'] in ['k_adapter']:
+                            logits = self.model(b_input_ids,
+                                                attention_mask=b_input_mask)
+                            loss = self.loss_fct(logits.view(-1, self.num_labels), b_labels.view(-1))
+                        else:
+
+                            result = self.model(b_input_ids,
+                                                attention_mask=b_input_mask,
+                                                labels=b_labels,
+                                                return_dict=True)
+
+                            loss = result.loss
+                            logits = result.logits
 
                 # Accumulate the validation loss.
                 total_eval_loss += loss.item()
@@ -171,6 +235,9 @@ class Trainer:
             # Report the final accuracy for this validation run.
             avg_val_accuracy = total_eval_accuracy / len(self.val_dataloader)
             print("  Validation Accuracy: {0:.2f}".format(avg_val_accuracy))
+            if self.config['logging']:
+                with open(self.config['logging_file'] + '.txt', 'a') as f:
+                    f.write("  Validation Accuracy: {0:.2f}".format(avg_val_accuracy) + "\n")
 
             # save the best model
             if avg_val_accuracy > best_accuracy:
@@ -187,19 +254,20 @@ class Trainer:
             print("  Validation Loss: {0:.2f}".format(avg_val_loss))
             print("  Validation took: {:}".format(validation_time))
 
-            # Record all statistics from this epoch.
-            training_stats.append(
-                {
-                    'epoch': epoch_i + 1,
-                    'Training Loss': avg_train_loss,
-                    'Valid. Loss': avg_val_loss,
-                    'Valid. Accur.': avg_val_accuracy,
-                    'Training Time': training_time,
-                    'Validation Time': validation_time
-                }
-            )
+            if self.config['logging']:
+                with open(self.config['logging_file'] + '.txt', 'a') as f:
+                    f.write("  Validation Loss: {0:.2f}".format(avg_val_loss) + "\n")
+                    f.write("  Validation took: {:}".format(validation_time) + "\n")
 
         print("")
         print("Training complete!")
         print(f'Best Validation Accuracy: {best_accuracy}')
         print("Total training took {:} (h:mm:ss)".format(format_time(time.time() - total_t0)))
+
+        if self.config['logging']:
+            with open(self.config['logging_file'] + '.txt', 'a') as f:
+                f.write("" + "\n")
+                f.write("Training complete!" + "\n")
+                f.write(f'Best Validation Accuracy: {best_accuracy}' + "\n")
+                f.write("Total training took {:} (h:mm:ss)".format(format_time(time.time() - total_t0)) + "\n")
+

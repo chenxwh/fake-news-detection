@@ -1,37 +1,56 @@
 # Data
 covid:
-  num_classes: 2
+  num_labels: 2
   train: "../data/covid/covid_train.tsv"
   val: "../data/covid/covid_valid.tsv"
   test: "../data/covid/covid_test_with_label.tsv"
   label_col: 2
   statement_col: 1
-  class_names: ["True", "Fake"]
+  label_names: ["True", "Fake"]
 
 liar:
-  num_classes: 6
+  num_labels: 6
   train: "../data/liar/train.tsv"
   val: "../data/liar/valid.tsv"
   test: "../data/liar/test.tsv"
   label_col: 1
   statement_col: 2
-  class_names: ["True", "Mostly-true", "Half-true", "Barely-true", "False", "Pants-fire"]
+  label_names: ["True", "Mostly-true", "Half-true", "Barely-true", "False", "Pants-fire"]
 
 # model_archive
 model_archive:
   knowbert-w-w: "https://allennlp.s3-us-west-2.amazonaws.com/knowbert/models/knowbert_wiki_wordnet_model.tar.gz"
   knowbert-wiki: "https://allennlp.s3-us-west-2.amazonaws.com/knowbert/models/knowbert_wiki_model.tar.gz"
   knowbert-wordnet: "https://allennlp.s3-us-west-2.amazonaws.com/knowbert/models/knowbert_wordnet_model.tar.gz"
-  k_adapters_fac: "../kadapters_models/fac-adapter/pytorch_model.bin"
-  k_adapters_lin: "../kadapters_models/lin-adapter/pytorch_model.bin"
+  kepler: "../kepler_models"
+  colake: "../colake_model"
+  erica-roberta: "../erica_models/roberta"
+  erica-bert: "../erica_models/bert"
+  ernie: "../ernie/ernie_base"
+  k_adapter_fac: "../kadapter_models/fac-adapter/pytorch_model.bin"
+  k_adapter_lin: ""
+
+ernie_pre_calculated:
+  embed: "../ernie/embed.txt"
+  ent_map: "../ernie/ent_map.txt"
+  entity2id: "../ernie/entity2id.txt"
+  # dataset with ents pre_calculated
+  covid:
+    train: "../data/ernie_ents/new_covid_train.csv"
+    test: "../data/ernie_ents/new_covid_test.csv"
+    val: "../data/ernie_ents/new_covid_val.csv"
+  liar:
+    train: "../data/ernie_ents/new_liar_train.csv"
+    test: "../data/ernie_ents/new_liar_test.csv"
+    val: "../data/ernie_ents/new_liar_val.csv"
 
 # fine-tuning parameters
-embedding_dim: 64
+embedding_dim: 128
 hidden_size: 768
 hidden_size_large: 1024
 dropout_prob: 0.1  # BertForSequenceClassification default Dropout p=0.1
 max_grad_norm: 10
-epochs: 5
+epochs: 4
 batch_size: 1
 lr: 0.00001
 weight_decay: 0.01
