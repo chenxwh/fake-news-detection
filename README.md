@@ -1,6 +1,6 @@
 # Fake News Detection
 
-Official implementation for experiments in the paper "[]"().
+Official implementation for experiments in the paper "[]()".
 
 Fake news detection with BERT, RoBERTa and various knowledge-enhanced PLMs including [ERNIE](https://arxiv.org/abs/1905.07129), [KnowBert](https://arxiv.org/abs/1909.04164), [KEPLER](https://arxiv.org/abs/1911.06136) and [K-ADAPTER](https://arxiv.org/abs/2002.01808).\
 Experimented on [LIAR](https://arxiv.org/abs/1705.00648) and [COVID-19](https://arxiv.org/abs/2011.03327) dataset.
@@ -13,7 +13,7 @@ cd fake_news_detection
 
 ## Install Dependencies
 ```
-./install_libs
+bash install_libs
 ```
 
 ## Download PLMs weights 
