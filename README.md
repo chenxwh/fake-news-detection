@@ -7,7 +7,7 @@ Experimented on [LIAR](https://arxiv.org/abs/1705.00648) and [COVID-19](https://
 
 ## Get Started
 ```
-git clone https://github.com/chenxwh/fake_news_detection.git
+git clone https://github.com/chenxwh/fake-news-detection.git
 cd fake_news_detection
 ```
 
