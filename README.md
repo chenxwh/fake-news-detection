@@ -1,6 +1,6 @@
 # Fake News Detection
 
-Official implementation for experiments in the paper "[Evaluation of Fake News Detection with Knowledge-Enhanced Language Models](https://arxiv.org/abs/2204.00458)". \
+Official implementation for experiments in the paper "[Evaluation of Fake News Detection with Knowledge-Enhanced Language Models](https://ojs.aaai.org/index.php/ICWSM/article/view/19400)". \
 In Proceedings of the Sixteenth International AAAI Conference on Web and Social Media (AAAI ICWSM-2022).
 
 Fake news detection with BERT, RoBERTa and various knowledge-enhanced PLMs including [ERNIE](https://arxiv.org/abs/1905.07129), [KnowBert](https://arxiv.org/abs/1909.04164), [KEPLER](https://arxiv.org/abs/1911.06136) and [K-ADAPTER](https://arxiv.org/abs/2002.01808).\
@@ -30,3 +30,13 @@ python main.py --mode train --dataset liar --model bert-base  --num_labels 6 --l
 python main.py --mode test --dataset liar --model bert-base --num_labels 6 --logging
 ```
 
+## Cite 
+if you find the work helpful, please consider citing:
+```
+@inproceedings{Whitehouse_Weyde_Madhyastha_Komninos_2022,
+  title={Evaluation of Fake News Detection with Knowledge-Enhanced Language Models}, 
+  author={Whitehouse, Chenxi and Weyde, Tillman and Madhyastha, Pranava and Komninos, Nikos},
+  booktitle={Proceedings of the International AAAI Conference on Web and Social Media},
+  year={2022}, month={May}, pages={1425-1429} 
+}
+```
