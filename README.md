@@ -30,13 +30,15 @@ python main.py --mode train --dataset liar --model bert-base  --num_labels 6 --l
 python main.py --mode test --dataset liar --model bert-base --num_labels 6 --logging
 ```
 
-## Cite 
+## Citation
 if you find the work helpful, please consider citing:
 ```
-@inproceedings{Whitehouse_Weyde_Madhyastha_Komninos_2022,
-  title={Evaluation of Fake News Detection with Knowledge-Enhanced Language Models}, 
+@inproceedings{whitehouse2022evaluation,
+  title={Evaluation of Fake News Detection with Knowledge-Enhanced Language Models},
   author={Whitehouse, Chenxi and Weyde, Tillman and Madhyastha, Pranava and Komninos, Nikos},
   booktitle={Proceedings of the International AAAI Conference on Web and Social Media},
-  year={2022}, month={May}, pages={1425-1429} 
+  volume={16},
+  pages={1425--1429},
+  year={2022}
 }
 ```
